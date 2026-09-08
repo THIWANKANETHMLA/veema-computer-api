@@ -1,4 +1,4 @@
-package ik.ijse.veema_computer;
+package lk.ijse.veema_computer;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
