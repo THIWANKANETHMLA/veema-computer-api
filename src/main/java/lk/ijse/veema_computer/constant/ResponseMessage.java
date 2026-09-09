@@ -1,4 +1,4 @@
-package ik.ijse.veema_computer.constant;
+package lk.ijse.veema_computer.constant;
 
 public final class ResponseMessage {
 
@@ -19,6 +19,9 @@ public final class ResponseMessage {
 
     public static final String VALIDATION_FAILED =
             "Request validation failed";
+
+    public static final String INVALID_JSON =
+            "Request body contains invalid JSON";
 
     public static final String INTERNAL_ERROR =
             "An unexpected error occurred";

@@ -1,4 +1,4 @@
-package ik.ijse.veema_computer.constant;
+package lk.ijse.veema_computer.constant;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
