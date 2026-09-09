@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.ErrorResponse;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -118,16 +119,36 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<CommonResponse<Object>> handleGeneralException(
-            Exception exception) {
+            Exception exception
+    ) {
+        if (exception instanceof ErrorResponse springError
+                && springError.getStatusCode().is4xxClientError()) {
+
+            String message = springError.getBody().getDetail();
+
+            if (message == null) {
+                message = "Request could not be processed";
+            }
+
+            CommonResponse<Object> response = new CommonResponse<>(
+                    springError.getStatusCode().value(),
+                    null,
+                    message
+            );
+
+            return ResponseEntity
+                    .status(springError.getStatusCode())
+                    .headers(springError.getHeaders())
+                    .body(response);
+        }
 
         log.error("Unexpected server error", exception);
 
-        CommonResponse<Object> response =
-                new CommonResponse<Object>(
-                        ResponseCode.INTERNAL_ERROR,
-                        null,
-                        ResponseMessage.INTERNAL_ERROR
-                );
+        CommonResponse<Object> response = new CommonResponse<>(
+                ResponseCode.INTERNAL_ERROR,
+                null,
+                ResponseMessage.INTERNAL_ERROR
+        );
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
