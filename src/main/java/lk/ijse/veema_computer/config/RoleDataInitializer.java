@@ -3,45 +3,46 @@ package lk.ijse.veema_computer.config;
 import lk.ijse.veema_computer.entity.Role;
 import lk.ijse.veema_computer.enums.RoleName;
 import lk.ijse.veema_computer.repository.RoleRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
+@RequiredArgsConstructor
+@Slf4j
 public class RoleDataInitializer implements CommandLineRunner {
-
-    private static final Logger log =
-            LoggerFactory.getLogger(RoleDataInitializer.class);
 
     private final RoleRepository roleRepository;
 
-    public RoleDataInitializer(RoleRepository roleRepository) {
-        this.roleRepository = roleRepository;
-    }
-
     @Override
-    @Transactional
     public void run(String... args) {
+        Set<RoleName> allRoleNames = Set.of(RoleName.values());
 
-        int addedCount = 0;
+        Set<RoleName> existingRoleNames = roleRepository.findByRoleNameIn(allRoleNames)
+                .stream()
+                .map(Role::getRoleName)
+                .collect(Collectors.toSet());
 
-        for (RoleName roleName : RoleName.values()) {
+        List<Role> missingRoles = allRoleNames.stream()
+                .filter(roleName -> !existingRoleNames.contains(roleName))
+                .map(roleName -> {
+                    Role role = new Role();
+                    role.setRoleName(roleName);
+                    return role;
+                })
+                .toList();
 
-            if (!roleRepository.existsByRoleName(roleName)) {
-
-                Role role = new Role();
-                role.setRoleName(roleName);
-
-                roleRepository.save(role);
-                addedCount++;
-            }
+        if (!missingRoles.isEmpty()) {
+            roleRepository.saveAll(missingRoles);
+            log.info("Role initialization: {} missing role(s) added.", missingRoles.size());
+        } else {
+            log.info("Role initialization: 0 missing role(s) added");
         }
-
-        log.info(
-                "Role initialization: {} missing role(s) added",
-                addedCount
-        );
     }
 }
