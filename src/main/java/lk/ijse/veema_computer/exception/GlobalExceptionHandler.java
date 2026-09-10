@@ -25,16 +25,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<CommonResponse<Object>> handleResourceNotFound(
-            ResourceNotFoundException exception) {
-
-        log.warn("Resource not found: {}", exception.getMessage());
-
-        CommonResponse<Object> response =
-                new CommonResponse<Object>(
-                        ResponseCode.NOT_FOUND,
-                        null,
-                        exception.getMessage()
-                );
+            ResourceNotFoundException exception
+    ) {
+        CommonResponse<Object> response = new CommonResponse<>(
+                ResponseCode.NOT_FOUND,
+                null,
+                exception.getMessage()
+        );
 
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
@@ -43,40 +40,54 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<CommonResponse<Object>> handleDuplicateResource(
-            DuplicateResourceException exception) {
-
-        log.warn("Duplicate resource: {}", exception.getMessage());
-
-        CommonResponse<Object> response =
-                new CommonResponse<Object>(
-                        ResponseCode.CONFLICT,
-                        null,
-                        exception.getMessage()
-                );
+            DuplicateResourceException exception
+    ) {
+        CommonResponse<Object> response = new CommonResponse<>(
+                ResponseCode.CONFLICT,
+                null,
+                exception.getMessage()
+        );
 
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(response);
     }
 
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<CommonResponse<Object>> handleUnauthorized(
+            UnauthorizedException exception
+    ) {
+        CommonResponse<Object> response = new CommonResponse<>(
+                ResponseCode.UNAUTHORIZED,
+                null,
+                exception.getMessage()
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(response);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<CommonResponse<Object>> handleValidationErrors(
-            MethodArgumentNotValidException exception) {
-
+            MethodArgumentNotValidException exception
+    ) {
         Map<String, String> errors = new LinkedHashMap<>();
 
         exception.getBindingResult()
                 .getFieldErrors()
                 .forEach(error ->
-                        errors.put(error.getField(), error.getDefaultMessage())
+                        errors.put(
+                                error.getField(),
+                                error.getDefaultMessage()
+                        )
                 );
 
-        CommonResponse<Object> response =
-                new CommonResponse<Object>(
-                        ResponseCode.BAD_REQUEST,
-                        errors,
-                        ResponseMessage.VALIDATION_FAILED
-                );
+        CommonResponse<Object> response = new CommonResponse<>(
+                ResponseCode.BAD_REQUEST,
+                errors,
+                ResponseMessage.VALIDATION_FAILED
+        );
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -85,14 +96,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<CommonResponse<Object>> handleConstraintViolation(
-            ConstraintViolationException exception) {
-
-        CommonResponse<Object> response =
-                new CommonResponse<Object>(
-                        ResponseCode.BAD_REQUEST,
-                        null,
-                        exception.getMessage()
-                );
+            ConstraintViolationException exception
+    ) {
+        CommonResponse<Object> response = new CommonResponse<>(
+                ResponseCode.BAD_REQUEST,
+                null,
+                exception.getMessage()
+        );
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -101,16 +111,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<CommonResponse<Object>> handleInvalidJson(
-            HttpMessageNotReadableException exception) {
-
-        log.warn("Invalid JSON request");
-
-        CommonResponse<Object> response =
-                new CommonResponse<Object>(
-                        ResponseCode.BAD_REQUEST,
-                        null,
-                        ResponseMessage.INVALID_JSON
-                );
+            HttpMessageNotReadableException exception
+    ) {
+        CommonResponse<Object> response = new CommonResponse<>(
+                ResponseCode.BAD_REQUEST,
+                null,
+                ResponseMessage.INVALID_JSON
+        );
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)

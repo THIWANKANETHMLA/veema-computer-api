@@ -1,17 +1,25 @@
 package lk.ijse.veema_computer.service.impl;
 
+import lk.ijse.veema_computer.constant.ResponseMessage;
+import lk.ijse.veema_computer.dto.request.LoginRequestDTO;
 import lk.ijse.veema_computer.dto.request.RegisterRequestDTO;
+import lk.ijse.veema_computer.dto.response.LoginResponseDTO;
 import lk.ijse.veema_computer.dto.response.UserResponseDTO;
 import lk.ijse.veema_computer.entity.Role;
 import lk.ijse.veema_computer.entity.User;
 import lk.ijse.veema_computer.enums.RoleName;
 import lk.ijse.veema_computer.exception.DuplicateResourceException;
+import lk.ijse.veema_computer.exception.UnauthorizedException;
 import lk.ijse.veema_computer.repository.RoleRepository;
 import lk.ijse.veema_computer.repository.UserRepository;
+import lk.ijse.veema_computer.security.JwtUtil;
 import lk.ijse.veema_computer.service.AuthService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,15 +38,21 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtil jwtUtil;
 
     public AuthServiceImpl(
             UserRepository userRepository,
             RoleRepository roleRepository,
-            PasswordEncoder passwordEncoder
+            PasswordEncoder passwordEncoder,
+            AuthenticationManager authenticationManager,
+            JwtUtil jwtUtil
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authenticationManager = authenticationManager;
+        this.jwtUtil = jwtUtil;
     }
 
     @Override
@@ -78,7 +92,6 @@ public class AuthServiceImpl implements AuthService {
 
         try {
             user = userRepository.saveAndFlush(user);
-
         } catch (DataIntegrityViolationException exception) {
 
             if (isDuplicateKey(exception)) {
@@ -90,13 +103,61 @@ public class AuthServiceImpl implements AuthService {
             throw exception;
         }
 
+        log.info("Created user record with id={}", user.getId());
+
+        return convertToUserResponse(user);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public LoginResponseDTO login(LoginRequestDTO request) {
+
+        String username = request.getUsername()
+                .trim()
+                .toLowerCase(Locale.ROOT);
+
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            username,
+                            request.getPassword()
+                    )
+            );
+        } catch (AuthenticationException exception) {
+            throw new UnauthorizedException(
+                    ResponseMessage.INVALID_CREDENTIALS
+            );
+        }
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() ->
+                        new UnauthorizedException(
+                                ResponseMessage.INVALID_CREDENTIALS
+                        )
+                );
+
+        UserResponseDTO userResponse =
+                convertToUserResponse(user);
+
+        String accessToken =
+                jwtUtil.generateToken(userResponse);
+
+        log.info("User logged in successfully: {}", username);
+
+        return new LoginResponseDTO(
+                accessToken,
+                "Bearer",
+                userResponse
+        );
+    }
+
+    private UserResponseDTO convertToUserResponse(User user) {
+
         Set<String> roleNames = new HashSet<>();
 
         for (Role role : user.getRoles()) {
             roleNames.add(role.getRoleName().name());
         }
-
-        log.info("Created user record with id={}", user.getId());
 
         return new UserResponseDTO(
                 user.getId(),

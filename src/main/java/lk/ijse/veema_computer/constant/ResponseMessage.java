@@ -14,6 +14,12 @@ public final class ResponseMessage {
     public static final String RESOURCE_DELETED =
             "Resource deleted successfully";
 
+    public static final String LOGIN_SUCCESS =
+            "Login successful";
+
+    public static final String INVALID_CREDENTIALS =
+            "Invalid username or password";
+
     public static final String APPLICATION_RUNNING =
             "Veema Computer API is running";
 

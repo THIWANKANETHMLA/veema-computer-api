@@ -1,0 +1,8 @@
+package lk.ijse.veema_computer.exception;
+
+public class UnauthorizedException extends RuntimeException {
+
+    public UnauthorizedException(String message) {
+        super(message);
+    }
+}
