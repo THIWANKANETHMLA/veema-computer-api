@@ -63,8 +63,22 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
+
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
                         .requestMatchers(HttpMethod.POST, "/auth/register", "/auth/login").permitAll()
+
+                        .requestMatchers(HttpMethod.GET, "/categories", "/categories/**").hasAnyRole("ADMIN", "USER", "GUEST", "CASHIER", "TECHNICIAN")
+
+                        .requestMatchers(HttpMethod.POST, "/categories", "/categories/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.PUT, "/categories", "/categories/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.PATCH, "/categories", "/categories/**").hasRole("ADMIN")
+
+                        .requestMatchers(HttpMethod.DELETE, "/categories", "/categories/**").hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
